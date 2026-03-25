@@ -1,92 +1,49 @@
 # wcfLink
 
-`wcfLink` 是一个本地运行的 iLink 微信通道桌面 App。当前版本已经跑通：
+`wcfLink` 是一个可复用的 Go 核心库，用来接入 iLink 微信通道。
+
+它提供两种使用方式：
+
+- 作为 Go 库嵌入到你自己的程序里
+- 作为一个本地 HTTP 服务独立运行
+
+桌面应用已经拆分到独立项目 [wcfLink-GUI](https://github.com/lich0821/wcfLink-GUI)。
+
+## 当前支持
 
 - 扫码登录
 - 登录状态轮询
 - 已登录账号持久化
-- iLink `getupdates` 长轮询收消息
-- 文本消息接收与落库
-- 文本消息发送
-- 图片、语音、视频、文件接收与落盘
+- iLink `getupdates` 长轮询
+- 文本消息收发
 - 图片、视频、文件发送
-- 回调地址配置
-- 本地事件面板
-- 桌面端文本 / 媒体测试发送
+- 图片、语音、视频、文件接收与落盘
+- 本地事件存储
+- `context_token` 管理
 - 本地 HTTP API
-- SQLite 本地状态存储
-
-## 技术形态
-
-- 核心服务：Go
-- 桌面壳：Wails
-- 本地存储：SQLite
-- 前端：Vite + Vanilla JS
+- SQLite 状态存储
 
 ## 目录
 
-- 桌面入口：[main.go](/Users/chuck/Projs/WeChat/wcfLink/main.go)
-- Wails 桥接：[app.go](/Users/chuck/Projs/WeChat/wcfLink/app.go)
-- 后台入口：[main.go](/Users/chuck/Projs/WeChat/wcfLink/cmd/wcfLink/main.go)
-- 应用装配：[app.go](/Users/chuck/Projs/WeChat/wcfLink/internal/app/app.go)
-- iLink 客户端：[client.go](/Users/chuck/Projs/WeChat/wcfLink/internal/ilink/client.go)
-- SQLite 存储：[store.go](/Users/chuck/Projs/WeChat/wcfLink/internal/store/store.go)
-- HTTP API：[server.go](/Users/chuck/Projs/WeChat/wcfLink/internal/httpapi/server.go)
-- 长轮询 worker：[poller.go](/Users/chuck/Projs/WeChat/wcfLink/internal/worker/poller.go)
-- 桌面前端：[main.js](/Users/chuck/Projs/WeChat/wcfLink/frontend/src/main.js)
+- 公开入口：[engine/engine.go](/Users/chuck/Projs/WeChat/wcfLink/engine/engine.go)
+- 后台入口：[cmd/wcfLink/main.go](/Users/chuck/Projs/WeChat/wcfLink/cmd/wcfLink/main.go)
+- 应用服务：[internal/app/app.go](/Users/chuck/Projs/WeChat/wcfLink/internal/app/app.go)
+- 协议实现：[internal/ilink/client.go](/Users/chuck/Projs/WeChat/wcfLink/internal/ilink/client.go)
+- 媒体协议：[internal/ilink/media.go](/Users/chuck/Projs/WeChat/wcfLink/internal/ilink/media.go)
+- 存储层：[internal/store/store.go](/Users/chuck/Projs/WeChat/wcfLink/internal/store/store.go)
+- HTTP API：[internal/httpapi/server.go](/Users/chuck/Projs/WeChat/wcfLink/internal/httpapi/server.go)
+- 轮询 worker：[internal/worker/poller.go](/Users/chuck/Projs/WeChat/wcfLink/internal/worker/poller.go)
 
 ## 运行要求
 
-开发和构建需要：
-
 - Go `1.25+`
-- Node.js `20+`
-- `wails` CLI `v2`
+- 默认使用 SQLite
 
 ## 快速开始
 
-### 桌面版构建
+### 方式一：作为本地 HTTP 服务运行
 
-安装前端依赖：
-
-```bash
-cd frontend
-npm install
-cd ..
-```
-
-构建桌面应用：
-
-```bash
-wails build
-```
-
-macOS 构建完成后，产物在：
-
-```text
-build/bin/wcfLink.app
-```
-
-### 桌面版开发运行
-
-```bash
-wails dev
-```
-
-当前桌面 UI 支持：
-
-- 开始扫码登录
-- 已登录态展示账号信息
-- 本地退出登录
-- 设置监听地址
-- 设置回调地址
-- 查看事件流
-- 发送测试文本消息
-- 选择本地文件发送图片、语音、视频、文件
-
-### 后台模式构建
-
-如果你只想运行本地 HTTP 服务：
+构建并启动：
 
 ```bash
 go build -o ./bin/wcfLink ./cmd/wcfLink
@@ -99,59 +56,151 @@ go build -o ./bin/wcfLink ./cmd/wcfLink
 127.0.0.1:17890
 ```
 
-默认状态目录：
+启动后你可以通过 HTTP API 完成扫码登录、查询账号、拉取事件、发送消息。
 
-```text
-./bin/data/
+### 方式二：作为 Go 库嵌入
+
+最小示例：
+
+```go
+package main
+
+import (
+	"context"
+	"log/slog"
+	"os"
+
+	"wcfLink/engine"
+)
+
+func main() {
+	ctx := context.Background()
+	cfg := engine.LoadConfig()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	eng, err := engine.New(ctx, cfg, logger)
+	if err != nil {
+		panic(err)
+	}
+	defer eng.Shutdown()
+
+	if err := eng.StartBackground(ctx); err != nil {
+		panic(err)
+	}
+
+	select {}
+}
 ```
 
-默认数据库：
+## 登录流程
 
-```text
-./bin/data/wcfLink.db
+无论你是通过 Go 库还是 HTTP API，登录流程都一样：
+
+1. 发起登录，拿到二维码会话
+2. 轮询登录状态
+3. 用户扫码确认
+4. 登录成功后账号会自动持久化，并启动长轮询
+
+### Go 库登录示例
+
+```go
+session, err := eng.StartLogin(ctx, "")
+if err != nil {
+	return err
+}
+
+png, err := eng.GetLoginQRCodePNG(ctx, session.SessionID)
+if err != nil {
+	return err
+}
+
+_ = os.WriteFile("qrcode.png", png, 0o644)
+
+status, err := eng.GetLoginStatus(ctx, session.SessionID)
+if err != nil {
+	return err
+}
+
+_ = status
 ```
 
-## 桌面版使用
+### HTTP 登录示例
 
-### 1. 登录
+发起登录：
 
-点击“开始扫码登录”后，桌面 App 会直接显示二维码。
+```bash
+curl -s -X POST http://127.0.0.1:17890/api/accounts/login/start \
+  -H 'Content-Type: application/json' \
+  -d '{}'
+```
 
-扫码确认成功后：
+返回里会包含：
 
-- 账号信息会替换二维码区域
-- “开始扫码登录”会禁用
-- 可以直接在事件面板看到后续收发记录
+- `session_id`
+- `qr_code_url`
 
-### 2. 发送测试消息
+轮询登录状态：
 
-右侧测试面板支持直接发文本和媒体：
+```bash
+curl -s "http://127.0.0.1:17890/api/accounts/login/status?session_id=login_xxx"
+```
 
-- `账号 ID` 会在登录后自动填充
-- `目标用户 ID` 会自动取最近一个来信用户
-- 文本消息可以直接输入后点击发送
-- 媒体消息可以选择本地文件后发送
+如果你要直接拿二维码 PNG：
 
-如果当前联系人已有会话上下文，发送时会自动复用本地缓存的 `context_token`。
+```bash
+curl -o qrcode.png "http://127.0.0.1:17890/api/accounts/login/qr?session_id=login_xxx"
+```
 
-### 3. 退出登录
+## 作为库时可直接调用的接口
 
-当前实现的是“本地断开”：
+当前 `engine.Engine` 已公开这些核心方法：
 
-- 停止该账号轮询
-- 删除本地账号与上下文
-- UI 恢复到未登录状态
+- `StartBackground`
+- `Shutdown`
+- `StartLogin`
+- `GetLoginStatus`
+- `GetLoginSession`
+- `GetLoginQRCodePNG`
+- `ListAccounts`
+- `ListEvents`
+- `GetSettings`
+- `UpdateSettings`
+- `SendText`
+- `SendMedia`
+- `LogoutAccount`
+
+### 发送文本
+
+```go
+err := eng.SendText(ctx, accountID, toUserID, "你好", "")
+```
 
 说明：
 
-- 这不是远端 revoke token
-- 当前公开 iLink 协议里没有确认到可用的官方 logout 接口
+- 如果 `contextToken` 传空，会尝试从本地已保存的会话上下文里查
+- 当前发送仍然要求对方至少先来过一条消息
+
+### 发送媒体
+
+```go
+err := eng.SendMedia(ctx, accountID, toUserID, "image", "/abs/path/demo.jpg", "图片说明", "")
+```
+
+`mediaType` 当前支持：
+
+- `image`
+- `video`
+- `file`
+
+说明：
+
+- `text` 不为空时，会先发文本，再发媒体
+- 音频内容发送当前不可用
 
 ## HTTP API
 
-桌面版不依赖浏览器，但本地 HTTP API 仍然保留给外部系统集成。
-
-主要接口：
+当前可用接口：
 
 - `GET /health/live`
 - `GET /health/ready`
@@ -165,7 +214,30 @@ go build -o ./bin/wcfLink ./cmd/wcfLink
 - `POST /api/messages/send-text`
 - `POST /api/messages/send-media`
 
-### 发送文本消息
+### 查询账号
+
+```bash
+curl -s http://127.0.0.1:17890/api/accounts
+```
+
+### 查询事件
+
+```bash
+curl -s "http://127.0.0.1:17890/api/events?after_id=0&limit=100"
+```
+
+返回的事件里会包含：
+
+- `direction`
+- `event_type`
+- `from_user_id`
+- `to_user_id`
+- `body_text`
+- `media_path`
+- `media_file_name`
+- `media_mime_type`
+
+### 发送文本
 
 ```bash
 curl -s -X POST http://127.0.0.1:17890/api/messages/send-text \
@@ -177,7 +249,7 @@ curl -s -X POST http://127.0.0.1:17890/api/messages/send-text \
   }'
 ```
 
-### 发送媒体消息
+### 发送媒体
 
 ```bash
 curl -s -X POST http://127.0.0.1:17890/api/messages/send-media \
@@ -187,15 +259,29 @@ curl -s -X POST http://127.0.0.1:17890/api/messages/send-media \
     "to_user_id": "yyy@im.wechat",
     "type": "image",
     "file_path": "/absolute/path/to/demo.jpg",
-    "text": "这是图片说明"
+    "text": "图片说明"
   }'
 ```
 
 说明：
 
-- `type` 支持 `image`、`video`、`file`、`voice`
-- `type` 留空时会按文件扩展名自动判断
-- 当前媒体发送和文本发送一样，仍然要求这个用户先给你发过消息，以便复用已有 `context_token`
+- `type` 可传 `image`、`video`、`file`
+- `text` 可选
+- 当前音频内容发送不可用
+
+## 媒体文件保存
+
+入站媒体默认保存到：
+
+```text
+<state-dir>/media/
+```
+
+事件记录中会保存：
+
+- `media_path`
+- `media_file_name`
+- `media_mime_type`
 
 ## 配置
 
@@ -211,33 +297,8 @@ curl -s -X POST http://127.0.0.1:17890/api/messages/send-media \
 - `WCFLINK_POLL_TIMEOUT`
 - `WCFLINK_LOG_LEVEL`
 
-运行中通过 UI 或 API 保存的设置会写入：
+默认配置：
 
-```text
-<state-dir>/settings.json
-```
-
-当前保存：
-
-- `listen_addr`
-- `webhook_url`
-
-## 验证状态
-
-当前已经验证：
-
-- `go build ./...`
-- `go build -o ./bin/wcfLink ./cmd/wcfLink`
-- `wails build`
-- Wails 前端绑定生成
-- 桌面包产物生成
-- 扫码登录、文本接收、文本发送主链路已跑通
-- 图片、语音、视频、文件接收落盘链路已接通
-- 图片、视频、文件发送链路已接通
-
-## 媒体说明
-
-- 入站媒体默认保存到 `<state-dir>/media/`
-- 事件记录会保存媒体文件名、媒体类型和本地路径
-- 图片、视频、文件发送基于 `getuploadurl + CDN upload + sendmessage`
-- 语音接收已实现；语音发送不支持
+- 数据目录：`./bin/data/`
+- 数据库：`./bin/data/wcfLink.db`
+- 媒体目录：`<state-dir>/media/`
