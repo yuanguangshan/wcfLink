@@ -8,6 +8,7 @@ import (
 	"github.com/lich0821/wcfLink/internal/config"
 	"github.com/lich0821/wcfLink/internal/httpapi"
 	"github.com/lich0821/wcfLink/internal/model"
+	coreversion "github.com/lich0821/wcfLink/version"
 )
 
 type Config = config.Config
@@ -16,6 +17,7 @@ type Account = model.Account
 type Event = model.Event
 type LogEntry = model.LogEntry
 type Settings = model.Settings
+type VersionInfo = coreversion.Info
 
 type Engine struct {
 	app *internalapp.App
@@ -23,6 +25,10 @@ type Engine struct {
 
 func LoadConfig() Config {
 	return config.Load()
+}
+
+func CurrentVersion() VersionInfo {
+	return coreversion.Current()
 }
 
 func New(ctx context.Context, cfg Config, logger *slog.Logger) (*Engine, error) {

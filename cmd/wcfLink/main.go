@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -9,9 +11,17 @@ import (
 
 	"github.com/lich0821/wcfLink/internal/app"
 	"github.com/lich0821/wcfLink/internal/config"
+	coreversion "github.com/lich0821/wcfLink/version"
 )
 
 func main() {
+	showVersion := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Println(coreversion.String())
+		return
+	}
+
 	cfg := config.Load()
 
 	level := new(slog.LevelVar)

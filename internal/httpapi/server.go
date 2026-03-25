@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/lich0821/wcfLink/internal/model"
+	coreversion "github.com/lich0821/wcfLink/version"
 )
 
 type Service interface {
@@ -40,6 +41,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health/live", s.handleLive)
 	mux.HandleFunc("GET /health/ready", s.handleReady)
+	mux.HandleFunc("GET /api/version", s.handleVersion)
 	mux.HandleFunc("POST /api/accounts/login/start", s.handleLoginStart)
 	mux.HandleFunc("GET /api/accounts/login/status", s.handleLoginStatus)
 	mux.HandleFunc("GET /api/accounts/login/qr", s.handleLoginQR)
@@ -57,6 +59,7 @@ func (s *Server) handleLive(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":        true,
 		"timestamp": time.Now().UTC(),
+		"version":   coreversion.Current(),
 	})
 }
 
@@ -64,7 +67,12 @@ func (s *Server) handleReady(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":        true,
 		"timestamp": time.Now().UTC(),
+		"version":   coreversion.Current(),
 	})
+}
+
+func (s *Server) handleVersion(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, coreversion.Current())
 }
 
 func (s *Server) handleLoginStart(w http.ResponseWriter, r *http.Request) {
