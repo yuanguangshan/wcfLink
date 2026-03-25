@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"wcfLink/internal/config"
-	"wcfLink/internal/model"
-	"wcfLink/internal/store"
+	"github.com/lich0821/wcfLink/internal/config"
+	"github.com/lich0821/wcfLink/internal/model"
+	"github.com/lich0821/wcfLink/internal/store"
 )
 
 type runtimeState struct {

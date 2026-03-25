@@ -14,12 +14,12 @@ import (
 	"strings"
 	"time"
 
-	"wcfLink/internal/config"
-	"wcfLink/internal/httpapi"
-	"wcfLink/internal/ilink"
-	"wcfLink/internal/model"
-	"wcfLink/internal/store"
-	"wcfLink/internal/worker"
+	"github.com/lich0821/wcfLink/internal/config"
+	"github.com/lich0821/wcfLink/internal/httpapi"
+	"github.com/lich0821/wcfLink/internal/ilink"
+	"github.com/lich0821/wcfLink/internal/model"
+	"github.com/lich0821/wcfLink/internal/store"
+	"github.com/lich0821/wcfLink/internal/worker"
 )
 
 type App struct {

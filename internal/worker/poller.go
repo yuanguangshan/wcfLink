@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"wcfLink/internal/ilink"
-	"wcfLink/internal/model"
-	"wcfLink/internal/store"
+	"github.com/lich0821/wcfLink/internal/ilink"
+	"github.com/lich0821/wcfLink/internal/model"
+	"github.com/lich0821/wcfLink/internal/store"
 )
 
 type PollerManager struct {

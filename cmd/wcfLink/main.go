@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"wcfLink/internal/app"
-	"wcfLink/internal/config"
+	"github.com/lich0821/wcfLink/internal/app"
+	"github.com/lich0821/wcfLink/internal/config"
 )
 
 func main() {

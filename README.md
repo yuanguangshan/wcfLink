@@ -25,14 +25,14 @@
 
 ## 目录
 
-- 公开入口：[engine/engine.go](/Users/chuck/Projs/WeChat/wcfLink/engine/engine.go)
-- 后台入口：[cmd/wcfLink/main.go](/Users/chuck/Projs/WeChat/wcfLink/cmd/wcfLink/main.go)
-- 应用服务：[internal/app/app.go](/Users/chuck/Projs/WeChat/wcfLink/internal/app/app.go)
-- 协议实现：[internal/ilink/client.go](/Users/chuck/Projs/WeChat/wcfLink/internal/ilink/client.go)
-- 媒体协议：[internal/ilink/media.go](/Users/chuck/Projs/WeChat/wcfLink/internal/ilink/media.go)
-- 存储层：[internal/store/store.go](/Users/chuck/Projs/WeChat/wcfLink/internal/store/store.go)
-- HTTP API：[internal/httpapi/server.go](/Users/chuck/Projs/WeChat/wcfLink/internal/httpapi/server.go)
-- 轮询 worker：[internal/worker/poller.go](/Users/chuck/Projs/WeChat/wcfLink/internal/worker/poller.go)
+- 公开入口：[engine/engine.go](./engine/engine.go)
+- 后台入口：[cmd/wcfLink/main.go](./cmd/wcfLink/main.go)
+- 应用服务：[internal/app/app.go](./internal/app/app.go)
+- 协议实现：[internal/ilink/client.go](./internal/ilink/client.go)
+- 媒体协议：[internal/ilink/media.go](./internal/ilink/media.go)
+- 存储层：[internal/store/store.go](./internal/store/store.go)
+- HTTP API：[internal/httpapi/server.go](./internal/httpapi/server.go)
+- 轮询 worker：[internal/worker/poller.go](./internal/worker/poller.go)
 
 ## 运行要求
 
@@ -60,6 +60,12 @@ go build -o ./bin/wcfLink ./cmd/wcfLink
 
 ### 方式二：作为 Go 库嵌入
 
+先安装模块：
+
+```bash
+go get github.com/lich0821/wcfLink@latest
+```
+
 最小示例：
 
 ```go
@@ -70,7 +76,7 @@ import (
 	"log/slog"
 	"os"
 
-	"wcfLink/engine"
+	"github.com/lich0821/wcfLink/engine"
 )
 
 func main() {

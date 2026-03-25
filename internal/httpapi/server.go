@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"wcfLink/internal/model"
+	"github.com/lich0821/wcfLink/internal/model"
 )
 
 type Service interface {

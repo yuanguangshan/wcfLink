@@ -1,4 +1,4 @@
-module wcfLink
+module github.com/lich0821/wcfLink
 
 go 1.25.4
 

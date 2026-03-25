@@ -4,10 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	internalapp "wcfLink/internal/app"
-	"wcfLink/internal/config"
-	"wcfLink/internal/httpapi"
-	"wcfLink/internal/model"
+	internalapp "github.com/lich0821/wcfLink/internal/app"
+	"github.com/lich0821/wcfLink/internal/config"
+	"github.com/lich0821/wcfLink/internal/httpapi"
+	"github.com/lich0821/wcfLink/internal/model"
 )
 
 type Config = config.Config

@@ -13,8 +13,8 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"wcfLink/internal/ilink"
-	"wcfLink/internal/model"
+	"github.com/lich0821/wcfLink/internal/ilink"
+	"github.com/lich0821/wcfLink/internal/model"
 )
 
 type Store struct {
